@@ -22,7 +22,7 @@ all_comments <- rbind(GBcomments, UScomments)
 english_youtube_2 <- rbind(USvideos2, GBvideos2)
 english_youtube_2 <- subset(english_youtube_2, select = -thumbnail_link)
 
-df <- merge(x = english_youtube_2, y = all_comments, by = "video_id", all.y = TRUE)
+df <- merge(x = english_youtube_1, y = all_comments, by = "video_id")
 #comments <- read.csv("comments.csv")
 #video_stats <- read.csv("videos-stats.csv")
 

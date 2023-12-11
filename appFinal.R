@@ -194,12 +194,25 @@ server <- function(input, output) {
     filtered_data <- grouped_df %>% 
       filter(category_name == input$selectedCategory)
     
-    # Create the ggplot object and render it
-    ggplot(filtered_data, aes(y = views, x = engagement_rate)) +
-      geom_point() +
-      labs(y = "Views", x = "Engagement Rate", 
-           title = paste("Views vs Engagement Rate for Category:", input$selectedCategory)) +
-      theme_minimal()
+    # Create the ggplot object with added styling
+    p <- ggplot(filtered_data, aes(x = engagement_rate, y = views)) +
+      geom_point(color = "#FF0000") +  # Red points, similar to YouTube's color theme
+      labs(
+        x = "Engagement Rate", 
+        y = "Views", 
+        title = paste("Views vs Engagement Rate for Category:", input$selectedCategory)
+      ) +
+      theme_minimal() +
+      theme(
+        plot.title = element_text(size = 14, face = "bold", color = "black"),
+        axis.title.x = element_text(size = 12, color = "black"),
+        axis.title.y = element_text(size = 12, color = "black"),
+        axis.text = element_text(color = "black"),
+        panel.background = element_rect(fill = "white"),
+        plot.background = element_rect(fill = "white")
+      )
+    
+    p
   })
   
 }

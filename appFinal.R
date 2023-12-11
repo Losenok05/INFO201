@@ -5,7 +5,7 @@ library(ggplot2)
 library(shinythemes)
 library(tm)
 library(wordcloud2)
-
+library(plotly)
 df <- read.csv("toSend.csv")
 categories_source <- read.csv("Categories.csv")
 
@@ -30,6 +30,7 @@ grouped_df <- read.csv("distinct_grouped_df.csv")
 weights <- c(1, 10, 20, 20)
 interaction_matrix <- as.matrix(grouped_df[c("likes.x", "comment_total", "total_likes", "total_replies")])
 grouped_df$engagement_rate <- log((rowSums(interaction_matrix * weights)^2) / grouped_df$views)
+grouped_df <- merge(grouped_df, categories_source, by = "category_id", all.x = TRUE)
 
 
 # Shiny portion
@@ -103,6 +104,18 @@ ui <- fluidPage(
                           )
                         )
                       )
+             ),
+             tabPanel("Interactive Plot", 
+                      sidebarLayout(
+                        sidebarPanel(
+                          selectInput("selectedCategory", 
+                                      "Select a Category", 
+                                      choices = unique(grouped_df$category_name))  # Replace with your actual category column
+                        ),
+                        mainPanel(
+                          plotOutput("interactivePlot")
+                        )
+                      )
              )
   )
 )
@@ -174,6 +187,19 @@ server <- function(input, output) {
                fontFamily = "Arial",
                
     )
+  })
+  output$interactivePlot <- renderPlot({
+    # Filter data based on selected category
+    req(input$selectedCategory)
+    filtered_data <- grouped_df %>% 
+      filter(category_name == input$selectedCategory)
+    
+    # Create the ggplot object and render it
+    ggplot(filtered_data, aes(y = views, x = engagement_rate)) +
+      geom_point() +
+      labs(y = "Views", x = "Engagement Rate", 
+           title = paste("Views vs Engagement Rate for Category:", input$selectedCategory)) +
+      theme_minimal()
   })
   
 }

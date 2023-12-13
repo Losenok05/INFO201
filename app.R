@@ -35,7 +35,12 @@ weights <- c(1, 10, 20, 20)
 interaction_matrix <- as.matrix(grouped_df[c("likes.x", "comment_total", "total_likes", "total_replies")])
 grouped_df$engagement_rate <- log((rowSums(interaction_matrix * weights)^2) / grouped_df$views)
 grouped_df <- merge(grouped_df, categories_source, by = "category_id", all.x = TRUE)
-
+#likesratio
+df <- read.csv("toSend.csv")
+df2 <- df
+df2 <- mutate(df2, likesratio = likes.x/(likes.x + dislikes))
+df2 <- mutate(df2, title_length = nchar(df$title))
+df2 <- df2[, -which(names(df2) == "combined_comments")]
 
 # Shiny portion
 
@@ -117,6 +122,33 @@ ui <- fluidPage(
                         )
                       )
              ),
+             tabPanel("Like Ratio vs. Comments",
+                      sidebarLayout(
+                        sidebarPanel(
+                          sliderInput("likesratio", "Like Ratio: ",
+                                      min = 0.0, max = 1.0, value = c(.25, .75)),
+                          h4(tags$b("Analysis: ")),
+                          p("This chart displays two variables, the title length along the x-axis, the views along the y
+                 axis. When looking at the overall trends, it seems that there is very little correlation between title length
+                 and amount of views. When looking at individual video titles, the strategies vary. Some videos attempt to fit in as many
+                 descriptive words as possible, while others are short and oftentimes vague. This data shows that there is no strong correlation between
+                 video title length and views."),
+                          p("Another thing to consider is the like ratio. This can be a good indicator to see how much of the audience
+                 enjoyed the video. As the like ratio decreases, we begin to see more variance in the data. This may be attributed
+                 to the smaller sample sizes at lower like ratios, but it can be an important factor when considering making videos.")
+                        ),
+                        mainPanel( plotOutput("plot"),
+                                   fluidRow(
+                                     br(),
+                                     h4(tags$b("Analysis: ")),
+                                     p("By comparing and contrasting both like ratios and title lengths for the videos, we gather more valuable data regarding trending videos.
+#    We see that title length has little to no influence over the outcomes of videos. Instead of focusing on length, it could be more important to
+#    focus on quality. We also see the variance in views when looking at the video's like ratio. If attempting to gain views, it could be a good idea
+#    to make something more controversial in order to get a reaction from the audience, but also consider that this strategy may be more risky for the individual,
+#    not garnering them the type of attention  they want.")
+                                   )),
+                    )
+             ),
              tabPanel("Comment Section Engagement", 
                       sidebarLayout(
                         sidebarPanel(
@@ -152,6 +184,8 @@ ui <- fluidPage(
                       )
              )
   )
+  
+
 )
 )
 # Server
@@ -248,6 +282,14 @@ server <- function(input, output) {
       )
     
     p
+  })
+  output$plot <- renderPlot({
+    filtered_df <- filter(df2, likesratio >= input$likesratio[1], likesratio <= input$likesratio[2])
+    
+    ggplot(filtered_df, aes(x = title_length, y = views)) +
+      geom_point() +
+      geom_smooth() +
+      labs(x = "Like Ratio", y = "Views")
   })
   
 }

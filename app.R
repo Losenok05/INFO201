@@ -63,12 +63,12 @@ ui <- fluidPage(
                       )
              )
              ,
-             tabPanel("BarCharts", 
+             tabPanel("Category vs. Viewer Engagement", 
                       titlePanel("How does video category affect viewer engagement?"),
                       sidebarLayout(
                         sidebarPanel(
                           selectInput("engagementType", "Engagement Type: ", choices = c("Views", "Comments", "Likes")),
-                          h4(tags$b("About this data:")),
+                          h4(tags$b("Analysis:")),
                           p("When it comes to posting YouTube videos, audience engagement is an important metric to see how well your video is doing. By comparing this
                    metric against the categories that the videos are uploaded under, we can make inferences about what categories will receive which type
                    of engagement."),
@@ -79,11 +79,19 @@ ui <- fluidPage(
                         ),
                         mainPanel(
                           titlePanel(h3("Engagement Statistics")), 
-                          plotOutput("plotEngagement")
+                          plotOutput("plotEngagement"),
+                          
+                          fluidRow(
+                            h4(tags$b("Takeaways: ")),
+                            p("When creating your own videos, consider creating one in one of the better performing categories. Music, entertainment, and 
+                              comedy seem to do well under any metric. These videos seem to have better chances at reaching the trending page. Appealing to 
+                              large audiences is important if attempting to gain a large following, so following the trends and utilizing succesful content
+                              as inspiration for your own could be a great tool to growing your platform.")
+                          )
                         )
                       )
              ),
-             tabPanel("Word Cloud",
+             tabPanel("Most Frequently Commented Words",
                       sidebarLayout(
                         sidebarPanel(
                           selectInput("wordcloud_column", "Choose Column:", choices = c("tags", "title")),
@@ -109,33 +117,43 @@ ui <- fluidPage(
                         )
                       )
              ),
-             tabPanel("Interactive Plot", 
+             tabPanel("Comment Section Engagement", 
                       sidebarLayout(
                         sidebarPanel(
                           selectInput("selectedCategory", 
                                       "Select a Category", 
                                       choices = unique(grouped_df$category_name)),
-                          p("Notably, when comparing the amount of views vs. the engagement rates of the 
-                          individual videos, we begin to see a trend within the data. For most categories, 
-                          there is a strong correlation between the amount of views and the engagement rate 
-                          of the video. As the amount of views increases, the engagement rate also tends to 
-                          increase. There are certain categories where this is correlation is not as evident, 
-                          notably the categories that failed to produce many trending videos (ie. \"nonprofits & activism\" 
-                          and \"shows\" categories.)"),
+                          h4(tags$b("Analysis: ")),
+                          p("Notably, when comparing the amount of views vs. the comment engagement rate, a metric that factors in comments and 
+                          amount of likes individual comments recieved, we begin to see another trend within the data. It appears that there is a strong
+                          correlation between how engaged the comment section is and the amount of views the video received. Videos with more comment activity oftentimes received more views compared to 
+                          videos with comment sections that were not as active. This pattern is apparent in multiple categories, showing that regardless of category,
+                          more engaged comment sections were oftentimes more strongly related to videos that received higher views. There are certain categories where this is correlation is not as evident, 
+                          but these outliers to the trend only really manifested themselves in categories with small sample sizes (ie. \"nonprofits & activism\" 
+                          and \"shows\" categories.)."),
                           p("By comparing these charts side by side, it shows that not only the category that your video is labeled under can influence 
                           it's performance, but how \"engaging\" the video is for the audience
                           can greatly affect how well a video does. Audience engagement is an incredibly important statistic for video performance,
                             so when creating a video, it is important creators take into account how the audience will react and how they will engage with the video.")
-                        
                           ),
                         mainPanel(
-                          plotOutput("interactivePlot")
+                          plotOutput("interactivePlot"),
+                          fluidRow(
+                            br(),
+                            h4(tags$b("Takeaways:"),
+                            p("Now what can individuals seeking to become viral take away from this data? It seems 
+                            that there is a strong correlation between active comment sections and 
+                              more video views, so creating content that incites discussion, or even reactions in 
+                              the form of comments may lead to an increased likelihood of your video going viral. The data does not take into account
+                              whether the reactions are negative or positive, but regardless of the emotions associated with the engagement, higher
+                              engagement still may increase the chances of your video achieving more views. ")
+                          )
                         )
                       )
              )
   )
 )
-
+)
 # Server
 server <- function(input, output) {
   #---------------------------------------------------------------------------------------------
@@ -218,6 +236,7 @@ server <- function(input, output) {
         y = "Views", 
         title = paste("Views vs Engagement Rate for Category:", input$selectedCategory)
       ) +
+      geom_smooth(method = lm, col = "blue") + 
       theme_minimal() +
       theme(
         plot.title = element_text(size = 14, face = "bold", color = "black"),

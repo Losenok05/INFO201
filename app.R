@@ -233,29 +233,31 @@ server <- function(input, output) {
     metric <- input$wordcloud_metric
     top_words <- input$wordcloud_top_words
     
-    columns <- c(column_name, metric)
-    df_selected <- grouped_df[!sapply(grouped_df[columns], is.na), columns]
+    df_sampled <- grouped_df #%>%
+      #sample_frac(0.9)  
+    # If there is not enough memory, try playing with sample_frac
+    df_selected <- df_sampled %>%
+      select(all_of(c(column_name, metric))) %>%
+      filter(!is.na(.[[column_name]]), !is.na(.[[metric]]))
     
-    text_data <- paste(df_selected[[metric]], df_selected[[column_name]])
-    corpus_column <- Corpus(VectorSource(text_data))
-    corpus_column <- tm_map(corpus_column, content_transformer(tolower))
-    corpus_column <- tm_map(corpus_column, removePunctuation)
-    corpus_column <- tm_map(corpus_column, removeNumbers)
-    corpus_column <- tm_map(corpus_column, removeWords, stopwords("en"))
-    corpus_column <- tm_map(corpus_column, stripWhitespace)
+    text_data <- tolower(paste(df_selected[[metric]], df_selected[[column_name]]))
+    text_data <- str_replace_all(text_data, "[[:punct:]]", " ")
+    text_data <- str_replace_all(text_data, "[[:digit:]]", " ")
+    text_data <- removeWords(text_data, stopwords("en"))
+    text_data <- str_replace_all(text_data, "\\|", " ")
+    words_list <- unlist(strsplit(text_data, " "))
+    words_list <- words_list[words_list != ""]
     
-    dtm_column <- DocumentTermMatrix(corpus_column)
-    dtm_df_column <- as.data.frame(as.matrix(dtm_column))
+    word_freq_table <- as.data.frame(table(words_list))
+    colnames(word_freq_table) <- c("word", "freq")
+    word_freq_table <- word_freq_table[order(-word_freq_table$freq),]
+    top_words_data <- head(word_freq_table, top_words)
     
-    word_freq_column <- colSums(dtm_df_column)
-    top_words_data <- head(sort(word_freq_column, decreasing = TRUE), top_words)
-    
-    wordcloud2(data = data.frame(word = names(top_words_data), freq = top_words_data),
-               color = "darkred",
-               fontFamily = "Arial",
-               
-    )
+    # Create the word cloud
+    wordcloud2(data = top_words_data, color = "darkred", fontFamily = "Arial")
   })
+  
+  
   output$interactivePlot <- renderPlot({
     # Filter data based on selected category
     req(input$selectedCategory)
